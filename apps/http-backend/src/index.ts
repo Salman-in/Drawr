@@ -1,24 +1,36 @@
 import express from "express"
 import bcrypt from "bcrypt"
 import jwt, { JwtPayload } from "jsonwebtoken"
-import { JWT_SECRET } from "./config"
+import { JWT_SECRET } from "@repo/backend-common/config"
 import { authMiddleware } from "./authMiddleware";
-import * as src from "@repo/db/client";
+import { client } from "@repo/db/client";
+import { CreateRoomSchema, CreateUserSchema, SigninSchema } from "@repo/common/types";
 
 
 const app = express();
 app.use(express.json());
 
+
 app.post('/api/v1/signup', async (req, res) => {
-    const { username, password } = req.body;
+    const data = CreateUserSchema.safeParse(req.body);
+
+    if(!data.success) {
+       res.status(400).json({
+            message: "Invalid data"
+        })
+        return;
+    }
+
+    const { username, password, name} = req.body;
 
     //Hashing the password
     const hashedPassword = await bcrypt.hash(password, 5);
 
-    const user = await src.client.user.create({
+    const user = await client.user.create({
         data: {
             username: username,
-            password: hashedPassword
+            password: hashedPassword,
+            name: name
         }
     })
     res.json({
@@ -28,9 +40,18 @@ app.post('/api/v1/signup', async (req, res) => {
 })
 
 app.post('/api/v1/signin', async (req, res) => {
+    const data = SigninSchema.safeParse(req.body);
+
+    if(!data.success) {
+        res.status(400).json({
+            message: "Invalid data"
+        })
+        return;
+    }
+
     const { username, password } = req.body;
 
-    const user = await src.client.user.findUnique({
+    const user = await client.user.findUnique({
         where: {
             username
         }
@@ -50,6 +71,15 @@ app.post('/api/v1/signin', async (req, res) => {
 })
 
 app.get('/api/v1/room',authMiddleware, (req, res) => {
+
+    const data = CreateRoomSchema.safeParse(req.body);
+
+    if(!data.success) {
+        res.status(400).json({
+            message: "Invalid data"
+        })
+        return;
+    }
 
     //DB Call
     res.json({
