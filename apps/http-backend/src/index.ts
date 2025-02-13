@@ -21,7 +21,7 @@ app.post('/api/v1/signup', async (req, res) => {
         return;
     }
 
-    const { username, password, name} = req.body;
+    const { username, password, name, photo} = req.body;
 
     //Hashing the password
     const hashedPassword = await bcrypt.hash(password, 5);
@@ -30,7 +30,8 @@ app.post('/api/v1/signup', async (req, res) => {
         data: {
             username: username,
             password: hashedPassword,
-            name: name
+            name: name,
+            photo:photo
         }
     })
     res.json({
