@@ -59,12 +59,12 @@ app.post('/api/v1/signin', async (req, res) => {
 
     const user = await client.user.findUnique({
         where: {
-            username:username,
-            password:password
+            username: username,
+            password: password
         }
     })
 
-    if(!user){
+    if (!user) {
         res.status(403).json({
             message: "Not Authorised"
         })
@@ -96,22 +96,22 @@ app.get('/api/v1/room', authMiddleware, async (req, res) => {
     }
     // @ts-ignore
     const userId = req.userId;
-try {
-    const room = await client.room.create({
-        data: {
-            slug: parsedData.data.name,
-            adminId: userId
-        }
-    })
-    
-    res.json({
-        roomID: room.id
-    })
-}catch (e) {
-    res.status(411).json({
-        message: "Room name already exists"
-    })
-}
+    try {
+        const room = await client.room.create({
+            data: {
+                slug: parsedData.data.name,
+                adminId: userId
+            }
+        })
+
+        res.json({
+            roomID: room.id
+        })
+    } catch (e) {
+        res.status(411).json({
+            message: "Room name already exists"
+        })
+    }
 })
 
 app.listen(3001);
