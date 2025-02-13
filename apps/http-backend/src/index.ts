@@ -12,38 +12,43 @@ app.use(express.json());
 
 
 app.post('/api/v1/signup', async (req, res) => {
-    const data = CreateUserSchema.safeParse(req.body);
+    const parsedData = CreateUserSchema.safeParse(req.body);
 
-    if(!data.success) {
-       res.status(400).json({
+    if (!parsedData.success) {
+        res.status(400).json({
             message: "Invalid data"
         })
         return;
     }
 
-    const { username, password, name, photo} = req.body;
+    const { username, password, name, photo } = parsedData.data;
 
     //Hashing the password
     const hashedPassword = await bcrypt.hash(password, 5);
 
-    const user = await client.user.create({
-        data: {
-            username: username,
-            password: hashedPassword,
-            name: name,
-            photo:photo
-        }
-    })
-    res.json({
-        message: "Signup successful",
-        id: user.id
-    });
+    try {
+        const user = await client.user.create({
+            data: {
+                username: username,
+                password: hashedPassword,
+                name: name
+            }
+        })
+        res.json({
+            message: "Signup successful",
+            id: user.id
+        });
+    } catch (e) {
+        res.status(411).json({
+            message: "User already exists"
+        });
+    }
 })
 
 app.post('/api/v1/signin', async (req, res) => {
-    const data = SigninSchema.safeParse(req.body);
+    const parsedData = SigninSchema.safeParse(req.body);
 
-    if(!data.success) {
+    if (!parsedData.success) {
         res.status(400).json({
             message: "Invalid data"
         })
@@ -54,15 +59,23 @@ app.post('/api/v1/signin', async (req, res) => {
 
     const user = await client.user.findUnique({
         where: {
-            username
+            username:username,
+            password:password
         }
     })
+
+    if(!user){
+        res.status(403).json({
+            message: "Not Authorised"
+        })
+        return;
+    }
 
     const userId = user?.id;
 
     const token = jwt.sign({
         userId
-    },JWT_SECRET);
+    }, JWT_SECRET);
 
     res.json({
         message: "Signed in successfully",
@@ -71,21 +84,34 @@ app.post('/api/v1/signin', async (req, res) => {
     })
 })
 
-app.get('/api/v1/room',authMiddleware, (req, res) => {
+app.get('/api/v1/room', authMiddleware, async (req, res) => {
 
-    const data = CreateRoomSchema.safeParse(req.body);
+    const parsedData = CreateRoomSchema.safeParse(req.body);
 
-    if(!data.success) {
+    if (!parsedData.success) {
         res.status(400).json({
             message: "Invalid data"
         })
         return;
     }
-
-    //DB Call
-    res.json({
-        roomID: 12345
+    // @ts-ignore
+    const userId = req.userId;
+try {
+    const room = await client.room.create({
+        data: {
+            slug: parsedData.data.name,
+            adminId: userId
+        }
     })
+    
+    res.json({
+        roomID: room.id
+    })
+}catch (e) {
+    res.status(411).json({
+        message: "Room name already exists"
+    })
+}
 })
 
 app.listen(3001);
