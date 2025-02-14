@@ -118,4 +118,23 @@ app.get('/api/v1/room', authMiddleware, async (req, res) => {
     }
 })
 
+app.get('/api/v1/chats/:roomId', async (req, res) => {
+    const roomId = Number(req.params.roomId);
+    console.log("Fetching messages for room:", roomId);
+
+    const messages = await client.chat.findMany({
+        where:{
+            roomId
+        },
+        orderBy: {
+            id:"desc"
+        },
+        take: 50 //Limiting the messages to latest 50  
+    })
+
+    res.json({
+        messages
+    })
+});
+
 app.listen(3001);
