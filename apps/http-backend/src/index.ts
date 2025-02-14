@@ -10,7 +10,6 @@ import { CreateRoomSchema, CreateUserSchema, SigninSchema } from "@repo/common/t
 const app = express();
 app.use(express.json());
 
-
 app.post('/api/v1/signup', async (req, res) => {
     const parsedData = CreateUserSchema.safeParse(req.body);
 
@@ -57,31 +56,36 @@ app.post('/api/v1/signin', async (req, res) => {
 
     const { username, password } = req.body;
 
+    
     const user = await client.user.findUnique({
         where: {
-            username: username,
-            password: password
+            username: username
         }
     })
-
+    
     if (!user) {
         res.status(403).json({
             message: "Not Authorised"
         })
         return;
     }
+    //Comparing the hashed password
+    const passwordMatched = await bcrypt.compare(password, user.password);
 
     const userId = user?.id;
-
-    const token = jwt.sign({
-        userId
-    }, JWT_SECRET);
+    if (passwordMatched) {
+        const token = jwt.sign({
+            userId
+        }, JWT_SECRET);
+    
 
     res.json({
         message: "Signed in successfully",
         userId: userId,
-        token: token
+        token: token,
+        passwordMatched
     })
+    }
 })
 
 app.get('/api/v1/room', authMiddleware, async (req, res) => {
