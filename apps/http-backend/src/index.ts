@@ -138,5 +138,13 @@ app.get('/api/v1/chats/:roomId', async (req, res) => {
 });
 
 //Add the route which given the slug returns the room to the user. 
+app.get("api/v1/room/:slug", async (req, res) => {
+    const slug = req.params.slug;
+    const room = await client.room.findFirst({
+        where: {
+            slug
+        }
+    })
+})
 
 app.listen(3001);

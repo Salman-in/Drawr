@@ -9,15 +9,15 @@ function checkUser(token: string): string | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-  //As we know we are encoding an object, so if we get any string then close the ws connection and stop the execution.
-  if (typeof decoded == "string") {
-    return null;
-  }
+    //As we know we are encoding an object, so if we get any string then close the ws connection and stop the execution.
+    if (typeof decoded == "string") {
+      return null;
+    }
 
-  if (!decoded || !decoded.userId) {
-    return null;
-  }
-  return decoded.userId;
+    if (!decoded || !decoded.userId) {
+      return null;
+    }
+    return decoded.userId;
   } catch (e) {
     return null;
   }
@@ -71,7 +71,7 @@ wss.on('connection', function connection(ws, request) {
 
     // {type: "chat", message: "hi there", roomId: 123}
     if (parsedData.type === "chat") {
-      const roomId = parsedData.roomId; 
+      const roomId = parsedData.roomId;
       const message = parsedData.message;
 
       //although this is not a good approach as the db call will cause delay in the chat to be recieved( optimal way is to use a queue).
